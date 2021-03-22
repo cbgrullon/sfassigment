@@ -1,0 +1,42 @@
+<template>
+    <lightning-card title="Contacts">
+        <div class="slds-form">
+            <div class="slds-grid slds-gutters">
+                <div class="slds-col">
+                    <div class="slds-form-element slds-form-element_stacked">
+                        <label class="slds-form-element__label" for="firstName">First Name</label>
+                        <div class="slds-form-element__control">
+                            <input type="text" placeholder="Placeholder text…" class="slds-input" name="firstName"
+                                id="firstName" onkeyup={handleFilterChange} />
+                        </div>
+                    </div>
+                </div>
+                <div class="slds-col">
+                    <div class="slds-form-element slds-form-element_stacked">
+                        <label class="slds-form-element__label" for="lastName">Last Name</label>
+                        <div class="slds-form-element__control">
+                            <input type="text" placeholder="Placeholder text…" class="slds-input" name="lastName"
+                                id="lastName" onkeyup={handleFilterChange} />
+                        </div>
+                    </div>
+                </div>
+                <div class="slds-col">
+                    <div class="slds-form-element slds-form-element_stacked">
+                        <label class="slds-form-element__label" for="industry">Account Industry</label>
+                        <div class="slds-form-element__control">
+                            <input type="text" placeholder="Placeholder text…" class="slds-input" name="industry"
+                                id="industry" onkeyup={handleFilterChange} />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+        <lightning-datatable data={contacts} columns={columns} key-field="Id" onrowselection={handleSelectedRow} >
+
+        </lightning-datatable>
+
+        <a class="slds-align_absolute-center" href="#" onclick={handleLoadMore}>Show more...</a>
+    </lightning-card>
+</template>
