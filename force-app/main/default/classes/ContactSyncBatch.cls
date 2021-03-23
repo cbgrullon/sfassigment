@@ -7,7 +7,6 @@ public class ContactSyncBatch implements Database.Batchable<sObject>,Database.Al
         return Database.getQueryLocator(query);
     }
     public void execute(Database.BatchableContext context,List<sObject> contacts){
-        System.debug('llegue');
         try{
             for(sObject sobj: contacts){
                 string id = (string)sobj.get('Id');
@@ -21,7 +20,17 @@ public class ContactSyncBatch implements Database.Batchable<sObject>,Database.Al
                 toUpdate.add(new Contact(Id=key,LastSyncMessage__C=value,LastSyncDate__c = datetime.now()));
             }
             update toUpdate;
-        }catch(Exception e){
+        }catch(ContactSync.ApiException apiException){
+            List<Contact> toUpdate = new List<Contact>();
+            for(sObject sobj:contacts){
+                string id = (string)sobj.get('ExternalId__c');
+                string message = (apiException.Body == null || apiException.Body== '') ? string.valueOf(apiException.StatusCode) : apiException.Body;
+                toUpdate.add(new Contact(Id=id,LastSyncMessage__c= message,LastSyncDate__c = Datetime.now()));
+            }
+            update toUpdate;
+            System.debug(string.valueOf(apiException.StatusCode)+' - '+apiException.Body);
+        }
+        catch(Exception e){
             System.debug(e.getMessage());
         }
     }

@@ -1,7 +1,8 @@
-import { LightningElement,wire } from 'lwc';
+import { LightningElement,wire,track } from 'lwc';
 import getContacts from '@salesforce/apex/ContactControllerV2.getContacts';
 import FirstNameField from '@salesforce/schema/Contact.FirstName';
 import LastNameField from '@salesforce/schema/Contact.LastName';
+import {ShowToastEvent} from 'lightning/platformShowToastEvent';
 import AccountIndustryField from '@salesforce/schema/Contact.Account.Industry';
 import getFields from '@salesforce/apex/ContactControllerV2.getFields';
 export default class ContactListToSync extends LightningElement {
@@ -19,6 +20,8 @@ export default class ContactListToSync extends LightningElement {
     selectedContacts = [];
     contacts = [];
     haveMore = false;
+    cantSync = true;
+    showModal = false;
     connectedCallback(){
         this.loadContacts(true);
         // getFields({}).then(response=>{
@@ -65,18 +68,24 @@ export default class ContactListToSync extends LightningElement {
         }
     }
     handleSelectedRow(event){
-        let toAppend = [];
-        for(let i =0;i<event.detail.selectedRows.length;i++){
-            const item = event.detail.selectedRows[i];
-            console.log(item)
-            let finded = this.selectedContacts.find((contact)=>{
-                return contact.Id === item.Id;
-            });
-            if(finded)
-                continue;
-            toAppend.push(item);
-        }
-        this.selectedContacts = [...this.selectedContacts,...toAppend];
-        console.log(this.selectedContacts);
+        // let toAppend = [];
+        // for(let i =0;i<event.detail.selectedRows.length;i++){
+        //     const item = event.detail.selectedRows[i];
+        //     console.warn(item)
+        //     let finded = this.selectedContacts.find((contact)=>{
+        //         return contact.Id === item.Id;
+        //     });
+        //     if(finded)
+        //         continue;
+        //     toAppend.push(item);
+        // }
+        this.selectedContacts = [...event.detail.selectedRows];
+        this.cantSync = this.selectedContacts == 0;
+    }
+    handleSyncClick(){
+        this.showModal = true;
+    }
+    closeModal(){
+        this.showModal = false;
     }
 }
