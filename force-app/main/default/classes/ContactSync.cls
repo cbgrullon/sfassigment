@@ -1,26 +1,41 @@
 public class ContactSync {
-    public static void SyncContacts(List<Contact> contacts){
-        Http client = new Http();
-        HttpRequest request = new HttpRequest();
-        request.setBody(JSON.serialize(contacts));
-        request.setEndpoint('callout:OtherOrg/services/apexrest/contactREST');
-        request.setMethod('POST');
-        HttpResponse response = client.send(request);
-        string bodyString = response.getBody();
-        List<Contact> toUpdate = new List<Contact>();
-        if(response.getStatusCode() != 200){
-            for(Contact c:contacts){
-                string message = string.valueOf(response.getStatusCode()) + ' - '+response.getBody();
-                toUpdate.add(new Contact(Id=c.Id,LastSyncMessage__c=message,LastSyncDate__c=DateTime.now()));
+    public static Map<string,string> SyncContacts(List<Contact> contacts){
+        system.debug('llegue');
+        try{
+            Http client = new Http();
+            HttpRequest request = new HttpRequest();
+            uploadContactsRequest syncContactsRequest = new uploadContactsRequest();
+            syncContactsRequest.contacts = contacts;
+            request.setBody(JSON.serialize(syncContactsRequest));
+            request.setEndpoint('callout:OtherOrg/services/apexrest/contactREST');
+            request.setMethod('POST');
+            request.setHeader('content-type', 'application/json');
+            HttpResponse response = client.send(request);
+            Integer statusCode = response.getStatusCode();
+            string bodyString = response.getBody();
+            Map<string,object> result = (Map<string,object>)JSON.deserializeUntyped(bodyString);
+            Map<string,string> toReturn = new Map<string,string>();
+            for(string key:result.keySet()){
+                toReturn.put(key,(string)result.get(key));
             }
-            update toUpdate;
-            return;
+            return toReturn;
+        }catch(Exception e){
+            string message = e.getMessage();
+            string stackTrace = e.getStackTraceString();
+            //system.debug(e.getMessage() + ' - '+e.getStackTraceString());
+            return new Map<string,string>();
         }
-        Map<string,string> result = (Map<string,string>)JSON.deserealize(Map<string,string>.class,bodyString);
-        for(string key:result.keySet()){
-            string value = result.get(key);
-            toUpdate.add(new Contact(Id=key,LastSyncMessage__c = value,LastSyncDate__c = DateTime.now()));
+        
+    }
+    public class ApiException extends Exception{
+        public ApiException(Integer StatusCode,string body){
+            this.StatusCode = StatusCode;
+            this.Body = body;
         }
-        update toUpdate;
+        public integer StatusCode{get;set;}
+        public string Body{get;set;}
+    }
+    public class uploadContactsRequest{
+        public List<Contact> contacts{get;set;}
     }
 }
