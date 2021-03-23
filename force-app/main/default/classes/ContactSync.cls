@@ -1,5 +1,5 @@
 public class ContactSync {
-    public static Map<string,string> SyncContacts(List<Contact> contacts){
+    public static List<upsertResult> SyncContacts(List<Contact> contacts){
         Http client = new Http();
         HttpRequest request = new HttpRequest();
         uploadContactsRequest syncContactsRequest = new uploadContactsRequest();
@@ -12,12 +12,8 @@ public class ContactSync {
         string bodyString = response.getBody();
         if(response.getStatusCode() != 200)
             throw new ApiException(response.getStatusCode(),response.getBody());
-        Map<string,object> result = (Map<string,object>)JSON.deserializeUntyped(bodyString);
-        Map<string,string> toReturn = new Map<string,string>();
-        for(string key:result.keySet()){
-            toReturn.put(key,(string)result.get(key));
-        }
-        return toReturn;
+        List<upsertResult> result = (List<upsertResult>)JSON.deserialize(bodyString,List<upsertResult>.class);
+        return result;
     }
     public class ApiException extends Exception{
         public ApiException(Integer StatusCode,string body){
@@ -29,5 +25,11 @@ public class ContactSync {
     }
     public class uploadContactsRequest{
         public List<Contact> contacts{get;set;}
+    }
+    public class upsertResult{
+        public string InternalId{get;set;}
+        public string ExternalId{get;set;}
+        public boolean IsSuccess{get;set;}
+        public string ErrorMessage{get;set;}
     }
 }

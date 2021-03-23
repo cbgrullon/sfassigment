@@ -13,13 +13,18 @@ public class ContactSyncBatch implements Database.Batchable<sObject>,Database.Al
                 sobj.put('ExternalId__c',id);
                 sobj.put('Id',null);
             }
-            Map<string,string> result =  ContactSync.SyncContacts(contacts);
+            List<ContactSync.upsertResult> result =  ContactSync.SyncContacts(contacts);
             List<Contact> toUpdate = new List<Contact>();
-            for(string key: result.keySet()){
-                string value = result.get(key);
-                toUpdate.add(new Contact(Id=key,LastSyncMessage__C=value,LastSyncDate__c = datetime.now()));
+            for(ContactSync.upsertResult ur:result){
+                Contact c = new Contact();
+                c.Id = ur.ExternalId;
+                c.ExternalId__c = ur.InternalId;
+                c.LastSyncMessage__C = ur.ErrorMessage;
+                c.LastSyncDate__c = Datetime.now();
+                toUpdate.add(c);
             }
-            update toUpdate;
+            if(toUpdate.size() > 0)
+            	update toUpdate;
         }catch(ContactSync.ApiException apiException){
             List<Contact> toUpdate = new List<Contact>();
             for(sObject sobj:contacts){
@@ -27,7 +32,8 @@ public class ContactSyncBatch implements Database.Batchable<sObject>,Database.Al
                 string message = (apiException.Body == null || apiException.Body== '') ? string.valueOf(apiException.StatusCode) : apiException.Body;
                 toUpdate.add(new Contact(Id=id,LastSyncMessage__c= message,LastSyncDate__c = Datetime.now()));
             }
-            update toUpdate;
+            if(toUpdate.size() > 0)
+            	update toUpdate;
             System.debug(string.valueOf(apiException.StatusCode)+' - '+apiException.Body);
         }
         catch(Exception e){
