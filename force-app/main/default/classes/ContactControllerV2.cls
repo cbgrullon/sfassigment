@@ -21,7 +21,7 @@ public class ContactControllerV2 {
             string likeIndustry = getLikeFilter(industryFilter);
             whereClause += ' And (Account.Industry = :industryFilter Or Account.Industry Like :likeIndustry)';
         }
-        string query = 'Select Id, FirstName, LastName, Account.Industry From Contact '+whereClause;
+        string query = 'Select Id, FirstName, LastName, AccountIndustry__c From Contact '+whereClause;
         //Integer count = Database.countQuery(countQuery);
         query += ' Limit :take OFFSET :skip';
         result = Database.Query(query);
@@ -35,9 +35,52 @@ public class ContactControllerV2 {
         for(string key:contactFields.keySet()){
             Schema.SObjectField field = contactFields.get(key);
             DescribeFieldResult describeField =field.getDescribe();
+            DisplayType fieldType= describeField.getType();
+            if(fieldType == DisplayType.Id || 
+                fieldType == DisplayType.Reference || 
+                fieldType == DisplayType.DataCategoryGroupReference ||
+                describeField.isExternalId() ||
+                describeField.isCalculated() ||
+                !describeField.isAccessible())
+                continue;
             toReturn.put(key,describeField.getLabel());
         }
         return toReturn;
+    }
+    @AuraEnabled(cacheable=true)
+    public static List<UserField__c> getUserFieldsSelection(){
+        return [Select Id,Name From UserField__c Where OwnerId = :UserInfo.getUserId()];
+    }
+    @AuraEnabled
+    public static void updateFieldSelection(List<string> fields){
+        List<UserField__c> records = [Select Id From UserField__c Where OwnerId = :UserInfo.getUserId()];
+        delete records;
+        records = new List<UserField__c>();
+        for(string field:fields){
+            records.add(new UserField__c(Name = field));
+        }
+        insert records;
+    }
+    @AuraEnabled
+    public static List<Contact> sendToOtherOrg(List<string> contactsId){
+        if(contactsId.size() == 0)
+            return null;
+        List<UserField__c> fieldsToSend = [Select Name From UserField__c Where OwnerId = :UserInfo.getUserId()];
+        string query = 'Select Id';
+        for(UserField__c uf: fieldsToSend){
+            query+=','+uf.Name;
+        }
+        query += ' From Contact Where Id In :contactsId';
+        List<sObject> sobjs = Database.Query(query);
+        List<Contact> toSend = new List<Contact>();
+        for(sObject sobj:sobjs){
+            Contact c = (Contact)sobj;
+            c.ExternalId__c = c.Id;
+            c.Id = null;
+            toSend.add(c);
+        }
+        ContactSync.SyncContacts(toSend);
+        return [Select Id,FirstName,LastName, LastSyncMessage__C,LastSyncDate__c From Contact Where Id in :contactsId];
     }
     public class ContactPaginationRequestDTO{
         public Integer Skip{get;set;}
