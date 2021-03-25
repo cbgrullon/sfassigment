@@ -19,13 +19,19 @@ public class ContactSync {
                 Contact c = new Contact();
                 c.Id = ur.ExternalId;
                 c.ExternalId__c = ur.InternalId;
-                c.LastSyncMessage__C = ur.ErrorMessage == null? 'Success':ur.ErrorMessage;
+                if(ur.ErrorMessage == null){
+                    c.LastSyncMessage__C = 'Success';
+                    c.IsLastSyncSuccess__c = true;
+                }
+                else
+                    c.LastSyncMessage__C = ur.ErrorMessage;
                 c.LastSyncDate__c = Datetime.now();
                 toUpdate.add(c);
             }
             if(toUpdate.size() > 0)
                 update toUpdate;
         }catch(Exception e){
+            System.debug(e.getMessage()+' - '+e.getStackTraceString());
             List<Contact> toUpdate = new List<Contact>();
             for(Contact c:contacts){
                 Contact item = new Contact();

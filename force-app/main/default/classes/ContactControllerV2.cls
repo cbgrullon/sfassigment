@@ -1,12 +1,9 @@
 public class ContactControllerV2 {
-    public ContactControllerV2() {
 
-    }
     @AuraEnabled(cacheable=true)
     public static List<Contact> getContacts(Integer skip,Integer take, string firstNameFilter,string lastNameFilter,string industryFilter){
         List<Contact> result = new List<Contact>();
-        //result.HaveMore = false;
-        //Initialize LastName != '' for the first filter and because LastName is required
+        //Initialize Id != '' because id always has a value
         string empty = '';
         string whereClause = 'Where Id != :empty';
         if(!StringNullOrEmptyOrWhiteSpace(firstNameFilter)){
@@ -65,6 +62,8 @@ public class ContactControllerV2 {
     public static List<Contact> sendToOtherOrg(List<string> contactsId){
         if(contactsId.size() == 0)
             return null;
+        if(contactsId.size() > 20)
+            return null;
         List<UserField__c> fieldsToSend = [Select Name From UserField__c Where OwnerId = :UserInfo.getUserId()];
         string query = 'Select Id';
         for(UserField__c uf: fieldsToSend){
@@ -81,18 +80,6 @@ public class ContactControllerV2 {
         }
         ContactSync.SyncContacts(toSend);
         return [Select Id,FirstName,LastName, LastSyncMessage__C,LastSyncDate__c From Contact Where Id in :contactsId];
-    }
-    public class ContactPaginationRequestDTO{
-        public Integer Skip{get;set;}
-        public Integer Take{get;set;}
-        public string FirstNameFilter{get;set;}
-        public string LastNameFilter{get;set;}
-        public string IndustryFilter{get;set;}
-    }
-    public class ContactPaginationResponseDTO{
-        public List<Contact> Items{get;set;}
-        public boolean HaveMore{get;set;}
-        public Integer Count{get;set;}
     }
     private static boolean StringNullOrEmptyOrWhiteSpace(string value){
         if(value == null)
