@@ -3,7 +3,6 @@ import getContacts from '@salesforce/apex/ContactControllerV2.getContacts';
 import FirstNameField from '@salesforce/schema/Contact.FirstName';
 import LastNameField from '@salesforce/schema/Contact.LastName';
 import LastSyncMessageField from '@salesforce/schema/Contact.LastSyncMessage__c';
-import LastSyncDateField from '@salesforce/schema/Contact.LastSyncDate__c';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import AccountIndustryField from '@salesforce/schema/Contact.AccountIndustry__c';
 import getFields from '@salesforce/apex/ContactControllerV2.getFields';
