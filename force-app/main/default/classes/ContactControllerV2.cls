@@ -38,7 +38,8 @@ public class ContactControllerV2 {
                 fieldType == DisplayType.DataCategoryGroupReference ||
                 describeField.isExternalId() ||
                 describeField.isCalculated() ||
-                !describeField.isAccessible())
+                !describeField.isAccessible() ||
+                key == 'IsDeleted')
                 continue;
             toReturn.put(key,describeField.getLabel());
         }
